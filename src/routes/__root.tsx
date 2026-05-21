@@ -76,10 +76,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "A Gen Z ideological movement built on education, awareness, secularism, and disciplined debate." },
       { name: "author", content: "Chaplin's Party" },
       { property: "og:title", content: "Chaplin's Party — For Change, Not Next." },
-      { property: "og:description", content: "Build ideology before influence." },
+      { property: "og:description", content: "A Gen Z ideological movement built on education, awareness, secularism, and disciplined debate." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Chaplin's Party — For Change, Not Next." },
+      { name: "twitter:description", content: "A Gen Z ideological movement built on education, awareness, secularism, and disciplined debate." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a7680479-4ccb-42ab-9fad-07ab9d045bbc/id-preview-58aad353--0036fb02-43d9-47a3-adf6-0c77682e151d.lovable.app-1779377291534.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a7680479-4ccb-42ab-9fad-07ab9d045bbc/id-preview-58aad353--0036fb02-43d9-47a3-adf6-0c77682e151d.lovable.app-1779377291534.png" },
     ],
     links: [
       {
