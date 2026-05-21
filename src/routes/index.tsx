@@ -182,6 +182,48 @@ function Index() {
             </div>
           ))}
         </div>
+
+        {/* Ideological Statement — Principles Over Personalities */}
+        <div className="mt-32 md:mt-48 relative grain border-t border-border pt-24 md:pt-32">
+          <div className="relative z-10 px-6 md:px-12 pb-12">
+            <blockquote className="font-display text-5xl md:text-7xl lg:text-[8vw] leading-[0.92] tracking-[-0.04em] text-balance max-w-6xl">
+              "Do not worship leaders.
+              <br />
+              <span className="text-fog">Worship ideology, ethics, and truth."</span>
+            </blockquote>
+
+            <div className="mt-20 md:mt-28 grid grid-cols-12 gap-8">
+              <div className="col-span-12 md:col-span-8">
+                <p className="text-base md:text-lg text-muted-foreground leading-[1.8] text-balance">
+                  We believe modern politics has become trapped in personality worship. Societies become weaker when people stop questioning leaders and start defending individuals blindly.
+                </p>
+                <p className="mt-6 text-base md:text-lg text-muted-foreground leading-[1.8] text-balance">
+                  Chaplin's Party does not exist to create political celebrities. No leader should become greater than the ideology itself. Every person in the movement — including leadership — must remain open to criticism, accountability, historical analysis, and ethical questioning.
+                </p>
+                <p className="mt-6 text-base md:text-lg text-muted-foreground leading-[1.8] text-balance">
+                  We believe ideas should survive through logic, evidence, humanity, and social responsibility — not through emotional attachment to powerful individuals.
+                </p>
+                <div className="mt-10 space-y-1">
+                  <p className="font-display text-xl md:text-2xl tracking-tight">Leadership is temporary.</p>
+                  <p className="font-display text-xl md:text-2xl tracking-tight">Ideology is permanent.</p>
+                  <p className="font-display text-xl md:text-2xl tracking-tight text-fog">Awareness is more important than popularity.</p>
+                </div>
+                <p className="mt-10 text-base md:text-lg text-muted-foreground leading-[1.8] text-balance">
+                  A healthy society is built when citizens think independently instead of following political fan culture. We encourage every individual to question respectfully, study deeply, debate intelligently, and support principles over personalities.
+                </p>
+                <p className="mt-6 text-base md:text-lg text-muted-foreground leading-[1.8] text-balance">
+                  The movement must always remain bigger than the individual.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-20 md:mt-28">
+              <p className="font-mono text-xs tracking-[0.35em] text-foreground uppercase">
+                "Question everyone. Understand everything."
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* SECTION 2 — CAPITALISM VS COMMUNISM */}
