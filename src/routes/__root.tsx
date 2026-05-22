@@ -1,4 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "@/lib/auth-context";
+import { Toaster } from "sonner";
 import {
   Outlet,
   Link,
@@ -9,6 +11,8 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import logoImg from "../assets/logo1cut.png";
+import heroFigureBw from "../assets/hero-figure-bw.jpg";
 
 function NotFoundComponent() {
   return (
@@ -72,23 +76,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Chaplin's Party — For Change, Not Next." },
+      { title: "Chaplin's Party of India — For Change, Not Next." },
       { name: "description", content: "A Gen Z ideological movement built on education, awareness, secularism, and disciplined debate." },
-      { name: "author", content: "Chaplin's Party" },
-      { property: "og:title", content: "Chaplin's Party — For Change, Not Next." },
+      { name: "author", content: "Chaplin's Party of India" },
+      { property: "og:title", content: "Chaplin's Party of India — For Change, Not Next." },
       { property: "og:description", content: "A Gen Z ideological movement built on education, awareness, secularism, and disciplined debate." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Chaplin's Party — For Change, Not Next." },
+      { name: "twitter:title", content: "Chaplin's Party of India — For Change, Not Next." },
       { name: "twitter:description", content: "A Gen Z ideological movement built on education, awareness, secularism, and disciplined debate." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a7680479-4ccb-42ab-9fad-07ab9d045bbc/id-preview-58aad353--0036fb02-43d9-47a3-adf6-0c77682e151d.lovable.app-1779377291534.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a7680479-4ccb-42ab-9fad-07ab9d045bbc/id-preview-58aad353--0036fb02-43d9-47a3-adf6-0c77682e151d.lovable.app-1779377291534.png" },
+      { property: "og:image", content: heroFigureBw },
+      { name: "twitter:image", content: heroFigureBw },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "icon",
+        type: "image/png",
+        href: logoImg,
       },
     ],
   }),
@@ -112,12 +121,80 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { useEffect, useState } from "react";
+
+function CustomCursor() {
+  const [hoverState, setHoverState] = useState<"none" | "button" | "text">("none");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const updateCursor = (e: MouseEvent) => {
+      document.documentElement.style.setProperty("--cursor-x", `${e.clientX}px`);
+      document.documentElement.style.setProperty("--cursor-y", `${e.clientY}px`);
+    };
+
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target) return;
+
+      const isButton = !!(
+        target.tagName === "A" ||
+        target.tagName === "BUTTON" ||
+        target.closest("a") ||
+        target.closest("button") ||
+        target.closest('[role="button"]') ||
+        (target.tagName === "INPUT" && (target as HTMLInputElement).type === "submit")
+      );
+
+      const isText = !!(
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.closest("input") ||
+        target.closest("textarea") ||
+        target.closest("select") ||
+        target.closest("p, h1, h2, h3, h4, h5, h6, span, li, blockquote, label")
+      );
+
+      if (isButton) {
+        setHoverState("button");
+      } else if (isText) {
+        setHoverState("text");
+      } else {
+        setHoverState("none");
+      }
+    };
+
+    window.addEventListener("mousemove", updateCursor, { passive: true });
+    window.addEventListener("mouseover", handleMouseOver, { passive: true });
+
+    return () => {
+      window.removeEventListener("mousemove", updateCursor);
+      window.removeEventListener("mouseover", handleMouseOver);
+    };
+  }, []);
+
+  if (!mounted) return null;
+
+  return (
+    <div className={`custom-cursor state-${hoverState}`}>
+      <div className="custom-cursor-glow" />
+      <img src={logoImg} className="custom-cursor-logo" alt="" />
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AuthProvider>
+        <Outlet />
+        <Toaster />
+        <CustomCursor />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

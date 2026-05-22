@@ -1,21 +1,24 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
 import heroFigure from "@/assets/hero-figure.jpg";
 import cityImg from "@/assets/city.jpg";
 import educationImg from "@/assets/education.jpg";
 import libraryImg from "@/assets/library.jpg";
 import debateImg from "@/assets/debate.jpg";
+import logoImg from "@/assets/logo1cut.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Chaplin's Party — For Change, Not Next." },
+      { title: "Chaplin's Party of India — For Change, Not Next." },
       {
         name: "description",
         content:
           "A Gen Z ideological movement built on education, awareness, secularism, and disciplined debate. Build ideology before influence.",
       },
-      { property: "og:title", content: "Chaplin's Party — For Change, Not Next." },
+      { property: "og:title", content: "Chaplin's Party of India — For Change, Not Next." },
       {
         property: "og:description",
         content:
@@ -34,10 +37,12 @@ const NAV = [
   ["Debate Culture", "#debate"],
   ["Community", "#community"],
   ["Join", "#join"],
-];
+] as const;
 
 function Index() {
   const [time, setTime] = useState("");
+  const [memberCount, setMemberCount] = useState<number | null>(null);
+
   useEffect(() => {
     const tick = () => {
       const d = new Date();
@@ -51,6 +56,18 @@ function Index() {
     return () => clearInterval(id);
   }, []);
 
+  // Fetch live member count
+  useEffect(() => {
+    supabase
+      .from("site_stats")
+      .select("value")
+      .eq("key", "total_members")
+      .single()
+      .then(({ data }) => {
+        if (data) setMemberCount(data.value);
+      });
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       <Nav />
@@ -60,9 +77,9 @@ function Index() {
         <img
           src={heroFigure}
           alt="Anonymous figure in long coat standing on a foggy city street at night"
-          className="absolute inset-0 h-full w-full object-cover opacity-70"
-          width={1080}
-          height={1920}
+          className="absolute inset-0 h-full w-full object-cover opacity-70 grayscale"
+          width={1280}
+          height={720}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background" />
         <div className="absolute inset-0 vignette" />
@@ -444,23 +461,13 @@ function Index() {
             A thoughtful youth movement,{" "}
             <span className="text-fog">measured in pages read, not posts shared.</span>
           </h2>
-          <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-px bg-border border border-border">
-            {[
-              ["12,480", "members connected"],
-              ["3,217", "books discussed"],
-              ["486", "debates hosted"],
-              ["94", "cities involved"],
-            ].map(([n, l]) => (
-              <div
-                key={l}
-                className="bg-background p-8 md:p-10 count-fade flex flex-col justify-between min-h-[200px]"
-              >
-                <span className="font-display text-4xl md:text-6xl tracking-[-0.04em]">{n}</span>
-                <span className="font-mono text-[10px] tracking-[0.3em] text-muted-foreground uppercase">
-                  {l}
-                </span>
-              </div>
-            ))}
+          <div className="mt-20 border border-border bg-background p-12 md:p-20 text-center count-fade">
+            <span className="font-display text-7xl md:text-[12vw] leading-none tracking-[-0.04em]">
+              {memberCount !== null ? memberCount.toLocaleString() : "—"}
+            </span>
+            <div className="mt-6 font-mono text-[10px] tracking-[0.4em] text-muted-foreground uppercase">
+              Members Connected
+            </div>
           </div>
         </div>
       </section>
@@ -484,47 +491,27 @@ function Index() {
             </p>
           </div>
 
-          <form
-            className="lg:col-span-7 lg:border-l border-border lg:pl-12"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.currentTarget;
-              const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
-              if (btn) {
-                btn.textContent = "Application Filed ✓";
-                btn.disabled = true;
-              }
-            }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border border border-border">
-              <Field label="Name" name="name" placeholder="Full name" />
-              <Field label="District" name="district" placeholder="City / district" />
-              <Field
-                label="Telegram or Instagram"
-                name="handle"
-                placeholder="@handle"
-                className="md:col-span-2"
-              />
-              <Field
-                label="Favorite Book"
-                name="book"
-                placeholder="Title — Author"
-                className="md:col-span-2"
-              />
-              <FieldArea
-                label="Why do you want change?"
-                name="why"
-                placeholder="Three honest sentences are enough."
-                className="md:col-span-2"
-              />
-            </div>
-            <button
-              type="submit"
-              className="mt-8 w-full md:w-auto px-12 py-5 bg-foreground text-background text-xs tracking-[0.35em] font-medium uppercase transition-colors hover:bg-fog"
+          <div className="lg:col-span-7 lg:border-l border-border lg:pl-12">
+            <p className="text-muted-foreground mb-8">
+              Create your account in seconds. Fill in your profile later.
+            </p>
+            <Link
+              to="/signup"
+              className="group inline-flex items-center justify-center px-12 py-5 bg-foreground text-background text-xs tracking-[0.35em] font-medium uppercase transition-all hover:bg-fog"
             >
-              Submit Application →
-            </button>
-          </form>
+              Create Account
+              <span className="ml-3 transition-transform group-hover:translate-x-1">→</span>
+            </Link>
+            <div className="mt-6">
+              <span className="text-sm text-muted-foreground">Already a member? </span>
+              <Link
+                to="/login"
+                className="text-sm text-foreground underline underline-offset-4 hover:text-fog transition-colors"
+              >
+                Sign in
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -534,27 +521,50 @@ function Index() {
 }
 
 function Nav() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [memberName, setMemberName] = useState<string | null>(null);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     onScroll();
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Fetch profile name for logged-in users
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.full_name) setMemberName(data.full_name);
+        });
+    } else {
+      setMemberName(null);
+    }
+  }, [user]);
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-500 ${
         scrolled ? "bg-background/85 backdrop-blur-md border-b border-border" : "bg-transparent"
       }`}
     >
-      <div className="flex items-center justify-between px-6 md:px-12 py-5">
-        <a href="#home" className="group">
-          <div className="font-display text-sm md:text-base tracking-[0.25em] leading-none">
-            CHAPLIN'S PARTY
-          </div>
-          <div className="mt-1 font-mono text-[9px] md:text-[10px] tracking-[0.3em] text-muted-foreground">
-            FOR CHANGE, NOT NEXT.
+      <div className="flex items-center justify-between px-4 min-[380px]:px-6 md:px-12 py-5">
+        <a href="#home" className="group flex items-center gap-3">
+          <img src={logoImg} alt="Chaplin's Party Logo" className="h-8 w-8 rounded-full border border-border group-hover:border-foreground transition-colors duration-300" />
+          <div>
+            <div className="font-display text-[10px] min-[380px]:text-xs sm:text-sm md:text-base tracking-[0.18em] min-[380px]:tracking-[0.25em] leading-none">
+              CHAPLIN'S PARTY OF INDIA
+            </div>
+            <div className="mt-1 font-mono text-[7px] min-[380px]:text-[9px] md:text-[10px] tracking-[0.2em] min-[380px]:tracking-[0.3em] text-muted-foreground">
+              FOR CHANGE, NOT NEXT.
+            </div>
           </div>
         </a>
         <nav className="hidden lg:flex items-center gap-8">
@@ -567,11 +577,43 @@ function Nav() {
               {label}
             </a>
           ))}
+          {user ? (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2.5">
+                <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
+                  {memberName || user.email?.split("@")[0]}
+                </span>
+                <span className="font-mono text-[9px] tracking-[0.2em] text-foreground/75 border border-border px-2 py-0.5 uppercase flex items-center gap-1.5 bg-secondary/10">
+                  <img src={logoImg} alt="Brand Logo" className="h-3 w-3 rounded-full border border-border/30" />
+                  Member
+                </span>
+              </div>
+              <Link
+                to="/leader-exam"
+                className="font-mono text-[11px] tracking-[0.25em] uppercase bg-foreground text-background px-4 py-1.5 hover:bg-fog hover:text-black transition-colors duration-300"
+              >
+                Become a Leader
+              </Link>
+              <Link
+                to="/dashboard"
+                className="font-mono text-[11px] tracking-[0.25em] uppercase text-foreground border border-border px-4 py-1.5 hover:bg-secondary transition-colors"
+              >
+                Dashboard
+              </Link>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="font-mono text-[11px] tracking-[0.25em] uppercase text-foreground border border-border px-4 py-1.5 hover:bg-secondary transition-colors"
+            >
+              Login
+            </Link>
+          )}
         </nav>
         <button
           onClick={() => setOpen((o) => !o)}
           aria-label="Menu"
-          className="lg:hidden font-mono text-[11px] tracking-[0.3em] uppercase border border-border px-4 py-2"
+          className="lg:hidden font-mono text-[9px] min-[380px]:text-[11px] tracking-[0.2em] min-[380px]:tracking-[0.3em] uppercase border border-border px-2.5 min-[380px]:px-4 py-1.5 min-[380px]:py-2"
         >
           {open ? "Close" : "Menu"}
         </button>
@@ -589,6 +631,43 @@ function Nav() {
                 {label}
               </a>
             ))}
+            {user ? (
+              <>
+                <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+                  <span className="font-mono text-xs tracking-[0.3em] uppercase">
+                    {memberName || user.email?.split("@")[0]}
+                  </span>
+                  <span className="font-mono text-[9px] tracking-[0.2em] text-foreground/75 border border-border px-2 py-0.5 uppercase flex items-center gap-1.5 bg-secondary/10">
+                    <img src={logoImg} alt="Brand Logo" className="h-3 w-3 rounded-full border border-border/30" />
+                    Member
+                  </span>
+                </div>
+                <div className="px-6 py-4 border-b border-border">
+                  <Link
+                    to="/leader-exam"
+                    onClick={() => setOpen(false)}
+                    className="block w-full py-3 bg-foreground text-background font-mono text-xs tracking-[0.3em] uppercase text-center hover:bg-fog transition-colors"
+                  >
+                    Become a Leader
+                  </Link>
+                </div>
+                <Link
+                  to="/dashboard"
+                  onClick={() => setOpen(false)}
+                  className="px-6 py-4 border-b border-border font-mono text-xs tracking-[0.3em] uppercase text-foreground"
+                >
+                  Dashboard
+                </Link>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setOpen(false)}
+                className="px-6 py-4 border-b border-border font-mono text-xs tracking-[0.3em] uppercase text-foreground"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
       )}
@@ -694,9 +773,12 @@ function Footer() {
             <br />
             <span className="text-fog">We study society.”</span>
           </p>
-          <p className="mt-12 font-display text-2xl md:text-3xl tracking-[-0.03em]">
-            For the People. By the Gen Z.
-          </p>
+          <div className="mt-12 flex items-center gap-4">
+            <img src={logoImg} alt="Chaplin's Party Logo" className="h-10 w-10 rounded-full border border-border" />
+            <p className="font-display text-2xl md:text-3xl tracking-[-0.03em]">
+              For the People. By the Gen Z.
+            </p>
+          </div>
         </div>
         <div className="md:col-span-3 md:col-start-8">
           <div className="font-mono text-[10px] tracking-[0.35em] text-muted-foreground uppercase">
@@ -717,9 +799,9 @@ function Footer() {
             Correspondence
           </div>
           <p className="mt-6 text-sm text-foreground/80 leading-relaxed">
-            members@chaplinsparty.org
-            <br />
-            press@chaplinsparty.org
+            <a href="mailto:partychaplin@gmail.com" className="hover:text-foreground hover:underline transition-colors">
+              partychaplin@gmail.com
+            </a>
           </p>
           <p className="mt-6 font-mono text-[10px] tracking-[0.3em] text-muted-foreground">
             EST. MMXXVI · NO. 001
@@ -728,7 +810,7 @@ function Footer() {
       </div>
       <div className="mt-20 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="font-mono text-[10px] tracking-[0.35em] text-muted-foreground uppercase">
-          © Chaplin's Party — A Reading Movement
+          © Chaplin's Party of India — A Reading Movement
         </div>
         <div className="font-mono text-[10px] tracking-[0.35em] text-muted-foreground uppercase">
           Knowledge creates responsibility.
