@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import heroFigure from "@/assets/hero-figure.jpg";
@@ -116,10 +116,10 @@ function Index() {
 
             <div className="mt-12 flex flex-col sm:flex-row gap-4">
               <a
-                href="#manifesto"
+                href="#ideology"
                 className="group inline-flex items-center justify-center px-8 py-4 bg-foreground text-background text-xs tracking-[0.3em] font-medium uppercase transition-all hover:bg-fog"
               >
-                Read the Manifesto
+                Read our Ideology First
                 <span className="ml-3 transition-transform group-hover:translate-x-1">→</span>
               </a>
               <a
@@ -130,6 +130,13 @@ function Index() {
                 <span className="ml-3 transition-transform group-hover:translate-x-1">→</span>
               </a>
             </div>
+
+            {/* ── Live Member Counter ── */}
+            {memberCount !== null && (
+              <div className="mt-14 inline-flex">
+                <LiveMemberCounter target={memberCount} />
+              </div>
+            )}
           </div>
         </div>
 
@@ -177,6 +184,9 @@ function Index() {
 
         <div className="mt-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-t border-l border-border">
           {[
+            ["Avoid Language Imposition", "Every language carries a culture. No state should force one tongue over another."],
+            ["Speak OBC, SC, ST Politics", "Represent the majority, not the elite. Ground-level justice over boardroom policy."],
+            ["Be Rationalist, Not Pseudo-Scientific", "Believe in God or be atheist — but never spread superstition. Think with evidence, even in faith."],
             ["Social Justice", "Equal standing before law, opportunity, and dignity."],
             ["Secularism", "The state must remain neutral. Belief is personal."],
             ["Civic Responsibility", "Citizenship is not a slogan. It is a daily practice."],
@@ -707,6 +717,107 @@ function Bar({ label, value, dark = false }: { label: string; value: number; dar
           className={`h-px ${dark ? "bg-background" : "bg-foreground"}`}
           style={{ width: `${value}%` }}
         />
+      </div>
+    </div>
+  );
+}
+
+/* ── Animated live member counter for the hero ── */
+function LiveMemberCounter({ target }: { target: number }) {
+  const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasAnimated]);
+
+  useEffect(() => {
+    if (!hasAnimated || target <= 0) return;
+
+    const duration = 2200;
+    const startTime = performance.now();
+
+    function easeOutExpo(t: number) {
+      return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
+    }
+
+    let raf: number;
+    function step(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOutExpo(progress);
+      setCount(Math.floor(eased * target));
+
+      if (progress < 1) {
+        raf = requestAnimationFrame(step);
+      } else {
+        setCount(target);
+      }
+    }
+
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [hasAnimated, target]);
+
+  // Format number with commas
+  const formatted = count.toLocaleString();
+
+  return (
+    <div
+      ref={ref}
+      className="hero-counter-card group relative"
+    >
+      {/* Glow border effect */}
+      <div className="absolute inset-0 hero-counter-glow pointer-events-none" />
+
+      <div className="relative z-10 flex items-center gap-5 sm:gap-8 px-5 sm:px-8 py-4 sm:py-5 bg-background/60 backdrop-blur-md border border-border/50">
+        {/* Live indicator */}
+        <div className="flex flex-col items-center gap-1.5">
+          <span className="relative flex h-3 w-3">
+            <span className="hero-pulse-ring absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]" />
+          </span>
+          <span className="font-mono text-[7px] sm:text-[8px] tracking-[0.3em] text-green-400 uppercase">
+            Live
+          </span>
+        </div>
+
+        {/* Count */}
+        <div className="flex flex-col">
+          <span className="font-display text-3xl sm:text-4xl md:text-5xl tracking-[-0.04em] leading-none tabular-nums text-foreground hero-count-glow">
+            {formatted}
+          </span>
+          <span className="mt-1.5 font-mono text-[8px] sm:text-[9px] tracking-[0.35em] text-muted-foreground uppercase">
+            Members &amp; Growing
+          </span>
+        </div>
+
+        {/* Divider */}
+        <div className="hidden sm:block h-10 w-px bg-border/60" />
+
+        {/* Tagline */}
+        <div className="hidden sm:flex flex-col max-w-[160px]">
+          <span className="font-mono text-[9px] tracking-[0.2em] text-fog/80 uppercase leading-relaxed">
+            You are not alone.
+          </span>
+          <span className="mt-0.5 font-mono text-[9px] tracking-[0.2em] text-muted-foreground leading-relaxed">
+            Join the movement →
+          </span>
+        </div>
       </div>
     </div>
   );

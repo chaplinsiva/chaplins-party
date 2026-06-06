@@ -28,6 +28,7 @@ function DashboardPage() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{ mobile_number?: boolean; district?: boolean }>({});
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -55,10 +56,26 @@ function DashboardPage() {
     fetchData();
   }, [fetchData]);
 
+  // Check if profile is incomplete (missing required fields)
+  const isProfileIncomplete = !loadingProfile && (!profile.mobile_number?.trim() || !profile.district?.trim());
+
   // Save profile
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
+
+    // Validate required fields
+    const errors: { mobile_number?: boolean; district?: boolean } = {};
+    if (!profile.mobile_number?.trim()) errors.mobile_number = true;
+    if (!profile.district?.trim()) errors.district = true;
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setToast({ type: "error", msg: "Please fill in your Mobile Number and District — these fields are now required." });
+      return;
+    }
+
+    setValidationErrors({});
     setSaving(true);
     setToast(null);
 
@@ -176,6 +193,38 @@ function DashboardPage() {
           </div>
         </div>
 
+        {/* ── Incomplete Profile Alert ── */}
+        {isProfileIncomplete && (
+          <div className="mb-16 relative overflow-hidden border border-amber-500/40 bg-amber-500/5">
+            <div className="absolute inset-0 scanlines opacity-5" />
+            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-6 md:p-8">
+              {/* Icon */}
+              <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 border border-amber-500/50 bg-amber-500/10">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              {/* Text */}
+              <div className="flex-1">
+                <h3 className="font-display text-lg md:text-xl tracking-tight text-amber-300">
+                  Profile Incomplete
+                </h3>
+                <p className="mt-1 text-sm text-amber-200/70 leading-relaxed">
+                  Your <strong className="text-amber-200">Mobile Number</strong> and <strong className="text-amber-200">District (Place)</strong> are now required fields.
+                  Please scroll down and fill them in to keep your membership active.
+                </p>
+              </div>
+              {/* CTA */}
+              <a
+                href="#profile-mobile"
+                className="flex-shrink-0 inline-flex items-center px-6 py-3 bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono text-[10px] tracking-[0.3em] uppercase hover:bg-amber-500/30 transition-colors"
+              >
+                Complete Now →
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* Leader CTA Banner */}
         <div className="border border-border bg-secondary/30 p-8 md:p-10 mb-16 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="absolute inset-0 scanlines opacity-10" />
@@ -216,7 +265,7 @@ function DashboardPage() {
             Tell us about <span className="text-fog">yourself.</span>
           </h2>
           <p className="text-sm text-muted-foreground max-w-xl">
-            All fields except email are optional. Update anytime.
+            Mobile Number and District are required. Other fields are optional.
           </p>
         </div>
 
@@ -271,19 +320,34 @@ function DashboardPage() {
                 />
               </label>
 
-              {/* District */}
+              {/* District — REQUIRED */}
               <label className="block bg-background p-6">
                 <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                  District
+                  District (Place)
+                </span>
+                <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase">
+                  Required
                 </span>
                 <input
                   id="profile-district"
                   type="text"
                   value={profile.district || ""}
-                  onChange={(e) => updateField("district", e.target.value)}
+                  onChange={(e) => {
+                    updateField("district", e.target.value);
+                    if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, district: false }));
+                  }}
                   placeholder="City / district"
-                  className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                  className={`mt-4 w-full bg-transparent border-0 border-b outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                    validationErrors.district
+                      ? "border-red-400 focus:border-red-400"
+                      : "border-border focus:border-foreground"
+                  }`}
                 />
+                {validationErrors.district && (
+                  <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-red-400">
+                    District is required
+                  </span>
+                )}
               </label>
 
               {/* State */}
@@ -323,22 +387,34 @@ function DashboardPage() {
                 </select>
               </label>
 
-              {/* Mobile Number */}
+              {/* Mobile Number — REQUIRED */}
               <label className="block bg-background p-6">
                 <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
                   Mobile Number
                 </span>
-                <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-muted-foreground/50 uppercase">
-                  Optional
+                <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase">
+                  Required
                 </span>
                 <input
                   id="profile-mobile"
                   type="tel"
                   value={profile.mobile_number || ""}
-                  onChange={(e) => updateField("mobile_number", e.target.value)}
+                  onChange={(e) => {
+                    updateField("mobile_number", e.target.value);
+                    if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, mobile_number: false }));
+                  }}
                   placeholder="e.g. +91 98765 43210"
-                  className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                  className={`mt-4 w-full bg-transparent border-0 border-b outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                    validationErrors.mobile_number
+                      ? "border-red-400 focus:border-red-400"
+                      : "border-border focus:border-foreground"
+                  }`}
                 />
+                {validationErrors.mobile_number && (
+                  <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-red-400">
+                    Mobile number is required
+                  </span>
+                )}
               </label>
 
               {/* Instagram */}
