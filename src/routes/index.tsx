@@ -114,26 +114,26 @@ function Index() {
               reform begins through education, awareness, and disciplined thought.
             </p>
 
-            <div className="mt-12 flex flex-col sm:flex-row gap-4">
+            <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row gap-3 sm:gap-4">
               <a
                 href="#ideology"
-                className="group inline-flex items-center justify-center px-8 py-4 bg-foreground text-background text-xs tracking-[0.3em] font-medium uppercase transition-all hover:bg-fog"
+                className="group inline-flex items-center justify-center px-5 sm:px-8 py-3 sm:py-4 bg-foreground text-background text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.3em] font-medium uppercase transition-all hover:bg-fog"
               >
                 Read our Ideology First
-                <span className="ml-3 transition-transform group-hover:translate-x-1">→</span>
+                <span className="ml-2 sm:ml-3 transition-transform group-hover:translate-x-1">→</span>
               </a>
               <a
                 href="#join"
-                className="group inline-flex items-center justify-center px-8 py-4 border border-border text-foreground text-xs tracking-[0.3em] font-medium uppercase transition-all hover:border-foreground"
+                className="group inline-flex items-center justify-center px-5 sm:px-8 py-3 sm:py-4 border border-border text-foreground text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.3em] font-medium uppercase transition-all hover:border-foreground"
               >
                 Join the Movement
-                <span className="ml-3 transition-transform group-hover:translate-x-1">→</span>
+                <span className="ml-2 sm:ml-3 transition-transform group-hover:translate-x-1">→</span>
               </a>
             </div>
 
-            {/* ── Live Member Counter ── */}
+            {/* ── Live Member Counter — centered, b&w ── */}
             {memberCount !== null && (
-              <div className="mt-14 inline-flex">
+              <div className="mt-10 sm:mt-14 flex justify-center w-full">
                 <LiveMemberCounter target={memberCount} />
               </div>
             )}
@@ -773,51 +773,45 @@ function LiveMemberCounter({ target }: { target: number }) {
     return () => cancelAnimationFrame(raf);
   }, [hasAnimated, target]);
 
-  // Format number with commas
   const formatted = count.toLocaleString();
 
   return (
     <div
       ref={ref}
-      className="hero-counter-card group relative"
+      className="hero-counter-card relative flex flex-col items-center text-center"
     >
-      {/* Glow border effect */}
-      <div className="absolute inset-0 hero-counter-glow pointer-events-none" />
+      {/* Outer breathing ring */}
+      <div className="absolute inset-0 hero-counter-ring pointer-events-none" />
 
-      <div className="relative z-10 flex items-center gap-5 sm:gap-8 px-5 sm:px-8 py-4 sm:py-5 bg-background/60 backdrop-blur-md border border-border/50">
-        {/* Live indicator */}
-        <div className="flex flex-col items-center gap-1.5">
-          <span className="relative flex h-3 w-3">
-            <span className="hero-pulse-ring absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]" />
+      <div className="relative z-10 flex flex-col items-center px-8 sm:px-14 md:px-20 py-6 sm:py-8 border border-foreground/15 bg-background/50 backdrop-blur-md">
+        {/* Live dot row */}
+        <div className="flex items-center gap-2 mb-4 sm:mb-5">
+          <span className="relative flex h-2 w-2">
+            <span className="hero-pulse-ring absolute inline-flex h-full w-full rounded-full bg-foreground/70" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-foreground shadow-[0_0_6px_rgba(255,255,255,0.4)]" />
           </span>
-          <span className="font-mono text-[7px] sm:text-[8px] tracking-[0.3em] text-green-400 uppercase">
-            Live
+          <span className="font-mono text-[8px] sm:text-[9px] tracking-[0.4em] text-foreground/60 uppercase">
+            Live Count
           </span>
         </div>
 
-        {/* Count */}
-        <div className="flex flex-col">
-          <span className="font-display text-3xl sm:text-4xl md:text-5xl tracking-[-0.04em] leading-none tabular-nums text-foreground hero-count-glow">
-            {formatted}
-          </span>
-          <span className="mt-1.5 font-mono text-[8px] sm:text-[9px] tracking-[0.35em] text-muted-foreground uppercase">
-            Members &amp; Growing
-          </span>
-        </div>
+        {/* Big number */}
+        <span className="font-display text-5xl sm:text-7xl md:text-8xl tracking-[-0.04em] leading-none tabular-nums text-foreground hero-count-glow">
+          {formatted}
+        </span>
+
+        {/* Label */}
+        <span className="mt-3 sm:mt-4 font-mono text-[8px] sm:text-[10px] tracking-[0.4em] text-foreground/40 uppercase">
+          Members &amp; Growing
+        </span>
 
         {/* Divider */}
-        <div className="hidden sm:block h-10 w-px bg-border/60" />
+        <div className="mt-4 sm:mt-5 w-12 h-px bg-foreground/15" />
 
         {/* Tagline */}
-        <div className="hidden sm:flex flex-col max-w-[160px]">
-          <span className="font-mono text-[9px] tracking-[0.2em] text-fog/80 uppercase leading-relaxed">
-            You are not alone.
-          </span>
-          <span className="mt-0.5 font-mono text-[9px] tracking-[0.2em] text-muted-foreground leading-relaxed">
-            Join the movement →
-          </span>
-        </div>
+        <span className="mt-3 sm:mt-4 font-mono text-[8px] sm:text-[9px] tracking-[0.25em] text-fog/60 uppercase">
+          You are not alone. Join the movement.
+        </span>
       </div>
     </div>
   );
