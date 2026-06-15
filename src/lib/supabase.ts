@@ -24,6 +24,10 @@ export type Profile = {
   why_join: string | null;
   age_range: string | null;
   mobile_number: string | null;
+  constituency: string | null;
+  place: string | null;
+  voter_id: string | null;
+  profile_completed: boolean;
   member_number: number;
   cpi_code: number;
   role: string;

@@ -30,7 +30,13 @@ function DashboardPage() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
-  const [validationErrors, setValidationErrors] = useState<{ mobile_number?: boolean; district?: boolean }>({});
+  const [validationErrors, setValidationErrors] = useState<{
+    mobile_number?: boolean;
+    constituency?: boolean;
+    place?: boolean;
+    full_name?: boolean;
+    voter_id?: boolean;
+  }>({});
   const [downloading, setDownloading] = useState(false);
 
   // Redirect if not authenticated
@@ -40,41 +46,54 @@ function DashboardPage() {
     }
   }, [authLoading, user, navigate]);
 
+  const userId = user?.id;
+
   // Fetch profile + stats
   const fetchData = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     setLoadingProfile(true);
 
     const [profileRes, statsRes] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      supabase.from("profiles").select("*").eq("id", userId).single(),
       supabase.from("site_stats").select("value").eq("key", "total_members").single(),
     ]);
 
     if (profileRes.data) setProfile(profileRes.data);
     if (statsRes.data) setTotalMembers(statsRes.data.value);
     setLoadingProfile(false);
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   // Check if profile is incomplete (missing required fields)
-  const isProfileIncomplete = !loadingProfile && (!profile.mobile_number?.trim() || !profile.district?.trim());
+  const isProfileIncomplete = !loadingProfile && (
+    !profile.full_name?.trim() ||
+    !profile.mobile_number?.trim() ||
+    !profile.constituency?.trim() ||
+    !profile.place?.trim() ||
+    !profile.voter_id?.trim()
+  );
+
+  const isLocked = !loadingProfile && profile.profile_completed === true && !isProfileIncomplete;
 
   // Save profile
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!user) return;
+    if (!user || isLocked) return;
 
     // Validate required fields
-    const errors: { mobile_number?: boolean; district?: boolean } = {};
+    const errors: { mobile_number?: boolean; constituency?: boolean; place?: boolean; full_name?: boolean; voter_id?: boolean } = {};
+    if (!profile.full_name?.trim()) errors.full_name = true;
     if (!profile.mobile_number?.trim()) errors.mobile_number = true;
-    if (!profile.district?.trim()) errors.district = true;
+    if (!profile.constituency?.trim()) errors.constituency = true;
+    if (!profile.place?.trim()) errors.place = true;
+    if (!profile.voter_id?.trim()) errors.voter_id = true;
 
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
-      setToast({ type: "error", msg: "Please fill in your Mobile Number and District — these fields are now required." });
+      setToast({ type: "error", msg: "Please fill in all required fields: Full Name, Mobile, Constituency, Place, and Voter ID." });
       return;
     }
 
@@ -86,7 +105,7 @@ function DashboardPage() {
       .from("profiles")
       .update({
         full_name: profile.full_name || null,
-        district: profile.district || null,
+        district: profile.place || null, // Keep compatibility for district
         state: profile.state || null,
         instagram_handle: profile.instagram_handle || null,
         telegram_handle: profile.telegram_handle || null,
@@ -94,16 +113,24 @@ function DashboardPage() {
         why_join: profile.why_join || null,
         age_range: profile.age_range || null,
         mobile_number: profile.mobile_number || null,
+        constituency: profile.constituency || null,
+        place: profile.place || null,
+        voter_id: profile.voter_id || null,
+        profile_completed: true, // Lock the profile!
       })
       .eq("id", user.id);
 
     setSaving(false);
 
     if (error) {
-      setToast({ type: "error", msg: error.message });
+      let msg = error.message;
+      if (error.code === "23505" || error.message.includes("unique constraint") || error.message.includes("voter_id")) {
+        msg = "This Voter ID (EPIC) Number is already registered by another member.";
+      }
+      setToast({ type: "error", msg });
     } else {
-      setToast({ type: "success", msg: "Profile updated successfully." });
-      setTimeout(() => setToast(null), 4000);
+      setToast({ type: "success", msg: "Profile submitted and locked successfully." });
+      fetchData();
     }
   }
 
@@ -252,8 +279,8 @@ function DashboardPage() {
                   Profile Incomplete
                 </h3>
                 <p className="mt-1 text-sm text-amber-200/70 leading-relaxed">
-                  Your <strong className="text-amber-200">Mobile Number</strong> and <strong className="text-amber-200">District (Place)</strong> are now required fields.
-                  Please scroll down and fill them in to keep your membership active.
+                  Your <strong className="text-amber-200">Full Name</strong>, <strong className="text-amber-200">Mobile Number</strong>, <strong className="text-amber-200">Constituency</strong>, <strong className="text-amber-200">Place</strong>, and <strong className="text-amber-200">Voter ID (EPIC)</strong> are required.
+                  Please scroll down and fill them in to lock your profile and generate your card.
                 </p>
               </div>
               {/* CTA */}
@@ -307,7 +334,7 @@ function DashboardPage() {
             Tell us about <span className="text-fog">yourself.</span>
           </h2>
           <p className="text-sm text-muted-foreground max-w-xl">
-            Mobile Number and District are required. Other fields are optional.
+            Full Name, Mobile Number, Constituency, Place, and Voter ID are required. Other fields are optional. Once submitted, details cannot be edited.
           </p>
         </div>
 
@@ -334,6 +361,11 @@ function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
             {/* Form Column */}
             <form onSubmit={handleSave} className="lg:col-span-2 order-2 lg:order-1">
+              {isLocked && (
+                <div className="mb-8 font-mono text-xs tracking-wider px-4 py-3 border text-amber-400 bg-amber-400/10 border-amber-400/20">
+                  SECURE STATUS: Your profile details have been submitted and locked. Re-editing is disabled.
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border border border-border">
                 {/* Email — read only */}
                 <label className="block bg-background p-6 md:col-span-2">
@@ -354,42 +386,96 @@ function DashboardPage() {
                   <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
                     Full Name
                   </span>
+                  <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase font-semibold">
+                    Required
+                  </span>
                   <input
                     id="profile-fullname"
                     type="text"
                     value={profile.full_name || ""}
-                    onChange={(e) => updateField("full_name", e.target.value)}
+                    disabled={isLocked}
+                    onChange={(e) => {
+                      updateField("full_name", e.target.value);
+                      if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, full_name: false }));
+                    }}
                     placeholder="Your full name"
-                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                    className={`mt-4 w-full bg-transparent border-0 border-b outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                      isLocked ? "text-muted-foreground cursor-not-allowed border-dashed border-border" : "focus:border-foreground border-border"
+                    } ${
+                      validationErrors.full_name
+                        ? "border-red-400 focus:border-red-400"
+                        : ""
+                    }`}
                   />
+                  {validationErrors.full_name && (
+                    <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-red-400">
+                      Full name is required
+                    </span>
+                  )}
                 </label>
 
-                {/* District — REQUIRED */}
+                {/* Constituency — REQUIRED */}
                 <label className="block bg-background p-6">
                   <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                    District (Place)
+                    Constituency
                   </span>
-                  <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase">
+                  <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase font-semibold">
                     Required
                   </span>
                   <input
-                    id="profile-district"
+                    id="profile-constituency"
                     type="text"
-                    value={profile.district || ""}
+                    value={profile.constituency || ""}
+                    disabled={isLocked}
                     onChange={(e) => {
-                      updateField("district", e.target.value);
-                      if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, district: false }));
+                      updateField("constituency", e.target.value);
+                      if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, constituency: false }));
                     }}
-                    placeholder="City / district"
+                    placeholder="Your assembly constituency"
                     className={`mt-4 w-full bg-transparent border-0 border-b outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
-                      validationErrors.district
+                      isLocked ? "text-muted-foreground cursor-not-allowed border-dashed border-border" : "focus:border-foreground border-border"
+                    } ${
+                      validationErrors.constituency
                         ? "border-red-400 focus:border-red-400"
-                        : "border-border focus:border-foreground"
+                        : ""
                     }`}
                   />
-                  {validationErrors.district && (
+                  {validationErrors.constituency && (
                     <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-red-400">
-                      District is required
+                      Constituency is required
+                    </span>
+                  )}
+                </label>
+
+                {/* Place — REQUIRED */}
+                <label className="block bg-background p-6">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    Place (City/Town)
+                  </span>
+                  <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase font-semibold">
+                    Required
+                  </span>
+                  <input
+                    id="profile-place"
+                    type="text"
+                    value={profile.place || ""}
+                    disabled={isLocked}
+                    onChange={(e) => {
+                      updateField("place", e.target.value);
+                      if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, place: false }));
+                    }}
+                    placeholder="City / Village / Town"
+                    className={`mt-4 w-full bg-transparent border-0 border-b outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                      isLocked ? "text-muted-foreground cursor-not-allowed border-dashed border-border" : "focus:border-foreground border-border"
+                    } ${
+                      validationErrors.place
+                        ? "border-red-400 focus:border-red-400"
+                        : ""
+                    }`}
+                  />
+                  {validationErrors.place && (
+                    <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-red-400">
+                      Place is required
                     </span>
                   )}
                 </label>
@@ -403,9 +489,12 @@ function DashboardPage() {
                     id="profile-state"
                     type="text"
                     value={profile.state || ""}
+                    disabled={isLocked}
                     onChange={(e) => updateField("state", e.target.value)}
                     placeholder="Tamil Nadu"
-                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                    className={`mt-4 w-full bg-transparent border-0 border-b border-border outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                      isLocked ? "text-muted-foreground cursor-not-allowed border-dashed" : "focus:border-foreground"
+                    }`}
                   />
                 </label>
 
@@ -417,8 +506,11 @@ function DashboardPage() {
                   <select
                     id="profile-age"
                     value={profile.age_range || ""}
+                    disabled={isLocked}
                     onChange={(e) => updateField("age_range", e.target.value)}
-                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base text-foreground transition-colors appearance-none cursor-pointer"
+                    className={`mt-4 w-full bg-transparent border-0 border-b border-border outline-none py-2 text-base text-foreground transition-colors appearance-none cursor-pointer ${
+                      isLocked ? "text-muted-foreground cursor-not-allowed border-dashed" : "focus:border-foreground"
+                    }`}
                   >
                     <option value="" className="bg-background text-muted-foreground">
                       Select age range
@@ -436,27 +528,63 @@ function DashboardPage() {
                   <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
                     Mobile Number
                   </span>
-                  <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase">
+                  <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase font-semibold">
                     Required
                   </span>
                   <input
                     id="profile-mobile"
                     type="tel"
                     value={profile.mobile_number || ""}
+                    disabled={isLocked}
                     onChange={(e) => {
                       updateField("mobile_number", e.target.value);
                       if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, mobile_number: false }));
                     }}
                     placeholder="e.g. +91 98765 43210"
                     className={`mt-4 w-full bg-transparent border-0 border-b outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                      isLocked ? "text-muted-foreground cursor-not-allowed border-dashed border-border" : "focus:border-foreground border-border"
+                    } ${
                       validationErrors.mobile_number
                         ? "border-red-400 focus:border-red-400"
-                        : "border-border focus:border-foreground"
+                        : ""
                     }`}
                   />
                   {validationErrors.mobile_number && (
                     <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-red-400">
                       Mobile number is required
+                    </span>
+                  )}
+                </label>
+
+                {/* Voter ID — REQUIRED */}
+                <label className="block bg-background p-6">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    Voter ID (EPIC) Number
+                  </span>
+                  <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase font-semibold">
+                    Required
+                  </span>
+                  <input
+                    id="profile-voterid"
+                    type="text"
+                    value={profile.voter_id || ""}
+                    disabled={isLocked}
+                    onChange={(e) => {
+                      updateField("voter_id", e.target.value);
+                      if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, voter_id: false }));
+                    }}
+                    placeholder="Your Voter ID number"
+                    className={`mt-4 w-full bg-transparent border-0 border-b outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                      isLocked ? "text-muted-foreground cursor-not-allowed border-dashed border-border" : "focus:border-foreground border-border"
+                    } ${
+                      validationErrors.voter_id
+                        ? "border-red-400 focus:border-red-400"
+                        : ""
+                    }`}
+                  />
+                  {validationErrors.voter_id && (
+                    <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-red-400">
+                      Voter ID is required
                     </span>
                   )}
                 </label>
@@ -470,9 +598,12 @@ function DashboardPage() {
                     id="profile-instagram"
                     type="text"
                     value={profile.instagram_handle || ""}
+                    disabled={isLocked}
                     onChange={(e) => updateField("instagram_handle", e.target.value)}
                     placeholder="@handle"
-                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                    className={`mt-4 w-full bg-transparent border-0 border-b border-border outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                      isLocked ? "text-muted-foreground cursor-not-allowed border-dashed" : "focus:border-foreground"
+                    }`}
                   />
                 </label>
 
@@ -485,9 +616,12 @@ function DashboardPage() {
                     id="profile-telegram"
                     type="text"
                     value={profile.telegram_handle || ""}
+                    disabled={isLocked}
                     onChange={(e) => updateField("telegram_handle", e.target.value)}
                     placeholder="@handle"
-                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                    className={`mt-4 w-full bg-transparent border-0 border-b border-border outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                      isLocked ? "text-muted-foreground cursor-not-allowed border-dashed" : "focus:border-foreground"
+                    }`}
                   />
                 </label>
 
@@ -500,9 +634,12 @@ function DashboardPage() {
                     id="profile-book"
                     type="text"
                     value={profile.favorite_book || ""}
+                    disabled={isLocked}
                     onChange={(e) => updateField("favorite_book", e.target.value)}
                     placeholder="Title — Author"
-                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                    className={`mt-4 w-full bg-transparent border-0 border-b border-border outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                      isLocked ? "text-muted-foreground cursor-not-allowed border-dashed" : "focus:border-foreground"
+                    }`}
                   />
                 </label>
 
@@ -514,10 +651,13 @@ function DashboardPage() {
                   <textarea
                     id="profile-why"
                     value={profile.why_join || ""}
+                    disabled={isLocked}
                     onChange={(e) => updateField("why_join", e.target.value)}
                     placeholder="Three honest sentences are enough."
                     rows={4}
-                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 resize-none transition-colors"
+                    className={`mt-4 w-full bg-transparent border-0 border-b border-border outline-none py-2 text-base placeholder:text-muted-foreground/50 resize-none transition-colors ${
+                      isLocked ? "text-muted-foreground cursor-not-allowed border-dashed" : "focus:border-foreground"
+                    }`}
                   />
                 </label>
               </div>
@@ -525,10 +665,10 @@ function DashboardPage() {
               <button
                 id="profile-save"
                 type="submit"
-                disabled={saving}
+                disabled={saving || isLocked}
                 className="mt-8 w-full md:w-auto px-12 py-5 bg-foreground text-background text-xs tracking-[0.35em] font-medium uppercase transition-all hover:bg-fog disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {saving ? "Saving..." : "Update Profile →"}
+                {saving ? "Saving..." : isLocked ? "Profile Submitted & Locked" : "Submit & Lock Profile →"}
               </button>
             </form>
 
@@ -646,10 +786,10 @@ function DashboardPage() {
                         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                           <div>
                             <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
-                              DISTRICT
+                              CONSTITUENCY
                             </div>
                             <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc] uppercase truncate" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
-                              {profile.district?.trim() || "—"}
+                              {profile.constituency?.trim() || "—"}
                             </div>
                           </div>
                           <div>

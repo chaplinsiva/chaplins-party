@@ -28,7 +28,7 @@ function VerifyMemberPage() {
       setLoading(true);
       setError(null);
       try {
-        let query = supabase.from("profiles").select("*");
+        let query = supabase.from("member_verification").select("*");
         
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (uuidRegex.test(id)) {
@@ -154,8 +154,12 @@ function VerifyMemberPage() {
                 <span className="col-span-2 text-[#fcfcfc] capitalize">{profile.role || "member"}</span>
               </div>
               <div className="grid grid-cols-3 p-4">
-                <span className="text-[#8a8a8f] uppercase tracking-wider text-[10px]">District</span>
-                <span className="col-span-2 text-[#fcfcfc] uppercase">{profile.district || "—"}</span>
+                <span className="text-[#8a8a8f] uppercase tracking-wider text-[10px]">Constituency</span>
+                <span className="col-span-2 text-[#fcfcfc] uppercase">{profile.constituency || "—"}</span>
+              </div>
+              <div className="grid grid-cols-3 p-4">
+                <span className="text-[#8a8a8f] uppercase tracking-wider text-[10px]">Place</span>
+                <span className="col-span-2 text-[#fcfcfc] uppercase">{profile.place || "—"}</span>
               </div>
               <div className="grid grid-cols-3 p-4">
                 <span className="text-[#8a8a8f] uppercase tracking-wider text-[10px]">State</span>
