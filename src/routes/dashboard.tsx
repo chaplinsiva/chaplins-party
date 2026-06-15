@@ -123,7 +123,8 @@ function DashboardPage() {
     setDownloading(true);
     try {
       const dataUrl = await toPng(cardElement, {
-        pixelRatio: 3,
+        pixelRatio: 4,
+        cacheBust: true,
         style: {
           transform: 'scale(1)',
           transformOrigin: 'top left',
@@ -139,7 +140,7 @@ function DashboardPage() {
         format: [pdfWidth, pdfHeight],
       });
 
-      pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight, undefined, "NONE");
       
       const memberNumStr = profile.cpi_code 
         ? `CPI-${String(profile.cpi_code).padStart(5, "0")}`
@@ -612,10 +613,10 @@ function DashboardPage() {
                       <div className="flex items-center gap-2">
                         <img src={logoImg} alt="" className="h-7 w-7 rounded-full border border-white/10" />
                         <div>
-                          <div className="font-display text-[9px] tracking-[0.15em] leading-none uppercase text-[#fcfcfc]">
+                          <div className="font-display text-[9px] tracking-[0.15em] leading-none uppercase text-[#fcfcfc]" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                             CHAPLIN'S PARTY OF INDIA
                           </div>
-                          <div className="text-[5px] font-mono tracking-[0.2em] text-[#8a8a8f] mt-0.5 uppercase">
+                          <div className="text-[5px] font-mono tracking-[0.2em] text-[#8a8a8f] mt-0.5 uppercase" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                             FOR CHANGE, NOT NEXT.
                           </div>
                         </div>
@@ -623,7 +624,7 @@ function DashboardPage() {
                       
                       <div className="flex items-center gap-1 border border-[#22c55e]/30 bg-[#22c55e]/5 px-1.5 py-0.5">
                         <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e] flicker animate-pulse" />
-                        <span className="font-mono text-[5px] tracking-widest text-[#22c55e] uppercase font-bold">
+                        <span className="font-mono text-[5px] tracking-widest text-[#22c55e] uppercase font-bold" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                           ACTIVE
                         </span>
                       </div>
@@ -634,44 +635,44 @@ function DashboardPage() {
                       {/* Left side: Member Info */}
                       <div className="flex flex-col gap-2 max-w-[65%]">
                         <div>
-                          <div className="text-[5px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase">
+                          <div className="text-[5px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                             MEMBER IDENTITY
                           </div>
-                          <div className="font-display text-sm font-semibold tracking-wide text-[#fcfcfc] uppercase truncate mt-0.5 max-w-[200px]">
+                          <div className="font-display text-sm font-semibold tracking-wide text-[#fcfcfc] uppercase truncate mt-0.5 max-w-[200px]" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                             {profile.full_name?.trim() || "YOUR NAME"}
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                           <div>
-                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase">
+                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                               DISTRICT
                             </div>
-                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc] uppercase truncate">
+                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc] uppercase truncate" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                               {profile.district?.trim() || "—"}
                             </div>
                           </div>
                           <div>
-                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase">
+                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                               STATE
                             </div>
-                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc] uppercase truncate">
+                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc] uppercase truncate" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                               {profile.state?.trim() || "—"}
                             </div>
                           </div>
                           <div>
-                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase">
+                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                               ROLE
                             </div>
-                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc] uppercase truncate">
+                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc] uppercase truncate" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                               {profile.role || "MEMBER"}
                             </div>
                           </div>
                           <div>
-                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase">
+                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                               JOINED
                             </div>
-                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc]">
+                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc]" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                               {profile.created_at
                                 ? new Date(profile.created_at).toLocaleDateString("en-GB", {
                                     day: "2-digit",
@@ -700,7 +701,7 @@ function DashboardPage() {
                             QR
                           </div>
                         )}
-                        <div className="font-mono text-[6px] tracking-[0.25em] text-[#8a8a8f] uppercase leading-none">
+                        <div className="font-mono text-[6px] tracking-[0.25em] text-[#8a8a8f] uppercase leading-none" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                           {profile.cpi_code
                             ? `CPI-${String(profile.cpi_code).padStart(5, "0")}`
                             : "CPI-*****"}
