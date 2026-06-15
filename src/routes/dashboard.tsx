@@ -141,8 +141,8 @@ function DashboardPage() {
 
       pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
       
-      const memberNumStr = profile.member_number 
-        ? `CPI-${String(profile.member_number).padStart(5, "0")}`
+      const memberNumStr = profile.cpi_code 
+        ? `CPI-${String(profile.cpi_code).padStart(5, "0")}`
         : "MEMBER";
         
       pdf.save(`CPI-MemberCard-${memberNumStr}.pdf`);
@@ -686,10 +686,10 @@ function DashboardPage() {
 
                       {/* Right side: Verification QR Code & Member Number */}
                       <div className="flex flex-col items-end gap-1.5">
-                        {profile.id ? (
+                        {profile.cpi_code ? (
                           <div className="bg-[#ffffff] p-0.5 rounded-[1px] opacity-90 transition-opacity hover:opacity-100">
                             <img
-                              src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`${window.location.origin}/verify/${profile.id}`)}`}
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`${window.location.origin}/verify/CPI-${String(profile.cpi_code).padStart(5, "0")}`)}`}
                               alt="Verification QR Code"
                               className="h-10 w-10"
                               crossOrigin="anonymous"
@@ -701,8 +701,8 @@ function DashboardPage() {
                           </div>
                         )}
                         <div className="font-mono text-[6px] tracking-[0.25em] text-[#8a8a8f] uppercase leading-none">
-                          {profile.member_number
-                            ? `CPI-${String(profile.member_number).padStart(5, "0")}`
+                          {profile.cpi_code
+                            ? `CPI-${String(profile.cpi_code).padStart(5, "0")}`
                             : "CPI-*****"}
                         </div>
                       </div>

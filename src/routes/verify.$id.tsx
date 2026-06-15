@@ -28,16 +28,29 @@ function VerifyMemberPage() {
       setLoading(true);
       setError(null);
       try {
-        const { data, error: fetchError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", id)
-          .single();
+        let query = supabase.from("profiles").select("*");
+        
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRegex.test(id)) {
+          query = query.eq("id", id);
+        } else {
+          const cpiCodeMatch = id.match(/^(?:CPI-)?0*(\d+)$/i);
+          if (cpiCodeMatch) {
+            const codeNum = parseInt(cpiCodeMatch[1], 10);
+            query = query.eq("cpi_code", codeNum);
+          } else {
+            setError("Invalid verification code format.");
+            setLoading(false);
+            return;
+          }
+        }
+
+        const { data, error: fetchError } = await query.single();
 
         if (fetchError || !data) {
           setError("Member not found or invalid signature. This identity is not verified.");
-        } else if (!data.full_name?.trim() || !data.member_number) {
-          setError("This membership profile is incomplete. Name and member number must be present to be verified.");
+        } else if (!data.full_name?.trim() || !data.cpi_code) {
+          setError("This membership profile is incomplete. Name and CPI code must be present to be verified.");
         } else {
           setProfile(data as Profile);
         }
@@ -133,7 +146,7 @@ function VerifyMemberPage() {
               <div className="grid grid-cols-3 p-4">
                 <span className="text-[#8a8a8f] uppercase tracking-wider text-[10px]">Member No.</span>
                 <span className="col-span-2 text-[#fcfcfc] font-semibold">
-                  CPI-{String(profile.member_number || 0).padStart(5, "0")}
+                  CPI-{String(profile.cpi_code || 0).padStart(5, "0")}
                 </span>
               </div>
               <div className="grid grid-cols-3 p-4">

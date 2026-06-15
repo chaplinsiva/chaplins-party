@@ -25,6 +25,7 @@ export type Profile = {
   age_range: string | null;
   mobile_number: string | null;
   member_number: number;
+  cpi_code: number;
   role: string;
   is_active: boolean;
   created_at: string;
