@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase, type Profile } from "@/lib/supabase";
 import logoImg from "@/assets/logo1cut.png";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -29,6 +31,7 @@ function DashboardPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ mobile_number?: boolean; district?: boolean }>({});
+  const [downloading, setDownloading] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -112,6 +115,46 @@ function DashboardPage() {
     await signOut();
     navigate({ to: "/" });
   }
+
+  const handleDownloadCard = async () => {
+    const cardElement = document.getElementById("membership-card");
+    if (!cardElement) return;
+
+    setDownloading(true);
+    try {
+      const canvas = await html2canvas(cardElement, {
+        scale: 3, // High scale for crisp rendering
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      
+      const pdfWidth = 85.6;
+      const pdfHeight = 54;
+      
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: [pdfWidth, pdfHeight],
+      });
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      
+      const memberNumStr = profile.member_number 
+        ? `CPI-${String(profile.member_number).padStart(5, "0")}`
+        : "MEMBER";
+        
+      pdf.save(`CPI-MemberCard-${memberNumStr}.pdf`);
+    } catch (err) {
+      console.error("Failed to generate PDF:", err);
+      setToast({ type: "error", msg: "Failed to generate member card PDF. Please try again." });
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   // Loading states
   if (authLoading || (!user && !authLoading)) {
@@ -289,204 +332,376 @@ function DashboardPage() {
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSave}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border border border-border">
-              {/* Email — read only */}
-              <label className="block bg-background p-6 md:col-span-2">
-                <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                  Email
-                </span>
-                <input
-                  id="profile-email"
-                  type="email"
-                  value={profile.email || ""}
-                  disabled
-                  className="mt-4 w-full bg-transparent border-0 border-b border-border outline-none py-2 text-base text-muted-foreground cursor-not-allowed"
-                />
-              </label>
-
-              {/* Full Name */}
-              <label className="block bg-background p-6">
-                <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                  Full Name
-                </span>
-                <input
-                  id="profile-fullname"
-                  type="text"
-                  value={profile.full_name || ""}
-                  onChange={(e) => updateField("full_name", e.target.value)}
-                  placeholder="Your full name"
-                  className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
-                />
-              </label>
-
-              {/* District — REQUIRED */}
-              <label className="block bg-background p-6">
-                <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                  District (Place)
-                </span>
-                <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase">
-                  Required
-                </span>
-                <input
-                  id="profile-district"
-                  type="text"
-                  value={profile.district || ""}
-                  onChange={(e) => {
-                    updateField("district", e.target.value);
-                    if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, district: false }));
-                  }}
-                  placeholder="City / district"
-                  className={`mt-4 w-full bg-transparent border-0 border-b outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
-                    validationErrors.district
-                      ? "border-red-400 focus:border-red-400"
-                      : "border-border focus:border-foreground"
-                  }`}
-                />
-                {validationErrors.district && (
-                  <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-red-400">
-                    District is required
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+            {/* Form Column */}
+            <form onSubmit={handleSave} className="lg:col-span-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border border border-border">
+                {/* Email — read only */}
+                <label className="block bg-background p-6 md:col-span-2">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    Email
                   </span>
-                )}
-              </label>
+                  <input
+                    id="profile-email"
+                    type="email"
+                    value={profile.email || ""}
+                    disabled
+                    className="mt-4 w-full bg-transparent border-0 border-b border-border outline-none py-2 text-base text-muted-foreground cursor-not-allowed"
+                  />
+                </label>
 
-              {/* State */}
-              <label className="block bg-background p-6">
-                <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                  State
-                </span>
-                <input
-                  id="profile-state"
-                  type="text"
-                  value={profile.state || ""}
-                  onChange={(e) => updateField("state", e.target.value)}
-                  placeholder="Tamil Nadu"
-                  className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
-                />
-              </label>
+                {/* Full Name */}
+                <label className="block bg-background p-6">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    Full Name
+                  </span>
+                  <input
+                    id="profile-fullname"
+                    type="text"
+                    value={profile.full_name || ""}
+                    onChange={(e) => updateField("full_name", e.target.value)}
+                    placeholder="Your full name"
+                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                  />
+                </label>
 
-              {/* Age Range */}
-              <label className="block bg-background p-6">
-                <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                  Age Range
-                </span>
-                <select
-                  id="profile-age"
-                  value={profile.age_range || ""}
-                  onChange={(e) => updateField("age_range", e.target.value)}
-                  className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base text-foreground transition-colors appearance-none cursor-pointer"
-                >
-                  <option value="" className="bg-background text-muted-foreground">
-                    Select age range
-                  </option>
-                  {AGE_RANGES.map((r) => (
-                    <option key={r} value={r} className="bg-background text-foreground">
-                      {r}
+                {/* District — REQUIRED */}
+                <label className="block bg-background p-6">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    District (Place)
+                  </span>
+                  <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase">
+                    Required
+                  </span>
+                  <input
+                    id="profile-district"
+                    type="text"
+                    value={profile.district || ""}
+                    onChange={(e) => {
+                      updateField("district", e.target.value);
+                      if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, district: false }));
+                    }}
+                    placeholder="City / district"
+                    className={`mt-4 w-full bg-transparent border-0 border-b outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                      validationErrors.district
+                        ? "border-red-400 focus:border-red-400"
+                        : "border-border focus:border-foreground"
+                    }`}
+                  />
+                  {validationErrors.district && (
+                    <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-red-400">
+                      District is required
+                    </span>
+                  )}
+                </label>
+
+                {/* State */}
+                <label className="block bg-background p-6">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    State
+                  </span>
+                  <input
+                    id="profile-state"
+                    type="text"
+                    value={profile.state || ""}
+                    onChange={(e) => updateField("state", e.target.value)}
+                    placeholder="Tamil Nadu"
+                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                  />
+                </label>
+
+                {/* Age Range */}
+                <label className="block bg-background p-6">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    Age Range
+                  </span>
+                  <select
+                    id="profile-age"
+                    value={profile.age_range || ""}
+                    onChange={(e) => updateField("age_range", e.target.value)}
+                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base text-foreground transition-colors appearance-none cursor-pointer"
+                  >
+                    <option value="" className="bg-background text-muted-foreground">
+                      Select age range
                     </option>
-                  ))}
-                </select>
-              </label>
+                    {AGE_RANGES.map((r) => (
+                      <option key={r} value={r} className="bg-background text-foreground">
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              {/* Mobile Number — REQUIRED */}
-              <label className="block bg-background p-6">
-                <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                  Mobile Number
-                </span>
-                <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase">
-                  Required
-                </span>
-                <input
-                  id="profile-mobile"
-                  type="tel"
-                  value={profile.mobile_number || ""}
-                  onChange={(e) => {
-                    updateField("mobile_number", e.target.value);
-                    if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, mobile_number: false }));
-                  }}
-                  placeholder="e.g. +91 98765 43210"
-                  className={`mt-4 w-full bg-transparent border-0 border-b outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
-                    validationErrors.mobile_number
-                      ? "border-red-400 focus:border-red-400"
-                      : "border-border focus:border-foreground"
-                  }`}
-                />
-                {validationErrors.mobile_number && (
-                  <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-red-400">
-                    Mobile number is required
+                {/* Mobile Number — REQUIRED */}
+                <label className="block bg-background p-6">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    Mobile Number
                   </span>
+                  <span className="ml-2 font-mono text-[9px] tracking-[0.2em] text-red-400 uppercase">
+                    Required
+                  </span>
+                  <input
+                    id="profile-mobile"
+                    type="tel"
+                    value={profile.mobile_number || ""}
+                    onChange={(e) => {
+                      updateField("mobile_number", e.target.value);
+                      if (e.target.value.trim()) setValidationErrors((prev) => ({ ...prev, mobile_number: false }));
+                    }}
+                    placeholder="e.g. +91 98765 43210"
+                    className={`mt-4 w-full bg-transparent border-0 border-b outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors ${
+                      validationErrors.mobile_number
+                        ? "border-red-400 focus:border-red-400"
+                        : "border-border focus:border-foreground"
+                    }`}
+                  />
+                  {validationErrors.mobile_number && (
+                    <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-red-400">
+                      Mobile number is required
+                    </span>
+                  )}
+                </label>
+
+                {/* Instagram */}
+                <label className="block bg-background p-6">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    Instagram Handle
+                  </span>
+                  <input
+                    id="profile-instagram"
+                    type="text"
+                    value={profile.instagram_handle || ""}
+                    onChange={(e) => updateField("instagram_handle", e.target.value)}
+                    placeholder="@handle"
+                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                  />
+                </label>
+
+                {/* Telegram */}
+                <label className="block bg-background p-6">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    Telegram Handle
+                  </span>
+                  <input
+                    id="profile-telegram"
+                    type="text"
+                    value={profile.telegram_handle || ""}
+                    onChange={(e) => updateField("telegram_handle", e.target.value)}
+                    placeholder="@handle"
+                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                  />
+                </label>
+
+                {/* Favorite Book */}
+                <label className="block bg-background p-6 md:col-span-2">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    Favorite Book
+                  </span>
+                  <input
+                    id="profile-book"
+                    type="text"
+                    value={profile.favorite_book || ""}
+                    onChange={(e) => updateField("favorite_book", e.target.value)}
+                    placeholder="Title — Author"
+                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
+                  />
+                </label>
+
+                {/* Why Join */}
+                <label className="block bg-background p-6 md:col-span-2">
+                  <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                    Why do you want change?
+                  </span>
+                  <textarea
+                    id="profile-why"
+                    value={profile.why_join || ""}
+                    onChange={(e) => updateField("why_join", e.target.value)}
+                    placeholder="Three honest sentences are enough."
+                    rows={4}
+                    className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 resize-none transition-colors"
+                  />
+                </label>
+              </div>
+
+              <button
+                id="profile-save"
+                type="submit"
+                disabled={saving}
+                className="mt-8 w-full md:w-auto px-12 py-5 bg-foreground text-background text-xs tracking-[0.35em] font-medium uppercase transition-all hover:bg-fog disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? "Saving..." : "Update Profile →"}
+              </button>
+            </form>
+
+            {/* Sticky Card Column */}
+            <div className="lg:col-span-1 lg:sticky lg:top-28 flex flex-col items-center lg:items-stretch gap-6">
+              <div className="w-full">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="font-mono text-[10px] tracking-[0.4em] text-muted-foreground">02</span>
+                  <span className="h-px flex-1 max-w-[60px] bg-border" />
+                  <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-foreground">
+                    Your Card
+                  </span>
+                </div>
+                <h3 className="font-display text-2xl tracking-tight mb-2">
+                  Membership <span className="text-fog">Identity.</span>
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Real-time preview of your membership card. Fill in details on the left to see live updates.
+                </p>
+              </div>
+
+              {/* Outer Card Frame */}
+              <div className="w-full max-w-[380px] bg-background border border-white/5 p-1.5 shadow-[0_0_50px_rgba(255,255,255,0.02)]">
+                <div className="relative group overflow-hidden border border-border">
+                  <div
+                    id="membership-card"
+                    className="relative w-full aspect-[1.586] bg-[#080808] flex flex-col justify-between p-5 overflow-hidden text-[#fcfcfc] border border-white/10 select-none"
+                    style={{
+                      backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 85%)`
+                    }}
+                  >
+                    {/* Grain & Scanlines overlay inside the card */}
+                    <div className="absolute inset-0 pointer-events-none opacity-5 bg-[repeating-linear-gradient(to_bottom,transparent,transparent_2px,rgba(255,255,255,0.05)_2px,rgba(255,255,255,0.05)_4px)]" />
+                    
+                    {/* Card Header */}
+                    <div className="flex items-start justify-between w-full z-10">
+                      <div className="flex items-center gap-2">
+                        <img src={logoImg} alt="" className="h-7 w-7 rounded-full border border-white/10" />
+                        <div>
+                          <div className="font-display text-[9px] tracking-[0.15em] leading-none uppercase text-[#fcfcfc]">
+                            CHAPLIN'S PARTY OF INDIA
+                          </div>
+                          <div className="text-[5px] font-mono tracking-[0.2em] text-[#8a8a8f] mt-0.5 uppercase">
+                            FOR CHANGE, NOT NEXT.
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-1 border border-[#22c55e]/30 bg-[#22c55e]/5 px-1.5 py-0.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e] flicker animate-pulse" />
+                        <span className="font-mono text-[5px] tracking-widest text-[#22c55e] uppercase font-bold">
+                          ACTIVE
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Body */}
+                    <div className="flex justify-between items-end w-full mt-auto z-10">
+                      {/* Left side: Member Info */}
+                      <div className="flex flex-col gap-2 max-w-[65%]">
+                        <div>
+                          <div className="text-[5px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase">
+                            MEMBER IDENTITY
+                          </div>
+                          <div className="font-display text-sm font-semibold tracking-wide text-[#fcfcfc] uppercase truncate mt-0.5 max-w-[200px]">
+                            {profile.full_name?.trim() || "YOUR NAME"}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                          <div>
+                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase">
+                              DISTRICT
+                            </div>
+                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc] uppercase truncate">
+                              {profile.district?.trim() || "—"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase">
+                              STATE
+                            </div>
+                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc] uppercase truncate">
+                              {profile.state?.trim() || "—"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase">
+                              ROLE
+                            </div>
+                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc] uppercase truncate">
+                              {profile.role || "MEMBER"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[4px] font-mono tracking-[0.2em] text-[#8a8a8f] uppercase">
+                              JOINED
+                            </div>
+                            <div className="font-mono text-[8px] tracking-wide text-[#fcfcfc]">
+                              {profile.created_at
+                                ? new Date(profile.created_at).toLocaleDateString("en-GB", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  }).toUpperCase()
+                                : "PENDING"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right side: Verification QR Code & Member Number */}
+                      <div className="flex flex-col items-end gap-1.5">
+                        {profile.id ? (
+                          <div className="bg-[#ffffff] p-0.5 rounded-[1px] opacity-90 transition-opacity hover:opacity-100">
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`${window.location.origin}/verify/${profile.id}`)}`}
+                              alt="Verification QR Code"
+                              className="h-10 w-10"
+                              crossOrigin="anonymous"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-10 w-10 bg-[#1a1a1b] flex items-center justify-center border border-white/5 font-mono text-[5px] text-[#8a8a8f]">
+                            QR
+                          </div>
+                        )}
+                        <div className="font-mono text-[6px] tracking-[0.25em] text-[#8a8a8f] uppercase leading-none">
+                          {profile.member_number
+                            ? `CPI-${String(profile.member_number).padStart(5, "0")}`
+                            : "CPI-*****"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Download CTA Button */}
+              <button
+                type="button"
+                onClick={handleDownloadCard}
+                disabled={downloading}
+                className="w-full max-w-[380px] py-4 bg-foreground text-background text-xs tracking-[0.25em] font-mono font-medium uppercase transition-all hover:bg-fog disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              >
+                {downloading ? (
+                  <>
+                    <span className="h-2 w-2 rounded-full bg-background animate-pulse" />
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                      />
+                    </svg>
+                    Download Card (PDF)
+                  </>
                 )}
-              </label>
-
-              {/* Instagram */}
-              <label className="block bg-background p-6">
-                <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                  Instagram Handle
-                </span>
-                <input
-                  id="profile-instagram"
-                  type="text"
-                  value={profile.instagram_handle || ""}
-                  onChange={(e) => updateField("instagram_handle", e.target.value)}
-                  placeholder="@handle"
-                  className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
-                />
-              </label>
-
-              {/* Telegram */}
-              <label className="block bg-background p-6">
-                <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                  Telegram Handle
-                </span>
-                <input
-                  id="profile-telegram"
-                  type="text"
-                  value={profile.telegram_handle || ""}
-                  onChange={(e) => updateField("telegram_handle", e.target.value)}
-                  placeholder="@handle"
-                  className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
-                />
-              </label>
-
-              {/* Favorite Book */}
-              <label className="block bg-background p-6 md:col-span-2">
-                <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                  Favorite Book
-                </span>
-                <input
-                  id="profile-book"
-                  type="text"
-                  value={profile.favorite_book || ""}
-                  onChange={(e) => updateField("favorite_book", e.target.value)}
-                  placeholder="Title — Author"
-                  className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 transition-colors"
-                />
-              </label>
-
-              {/* Why Join */}
-              <label className="block bg-background p-6 md:col-span-2">
-                <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                  Why do you want change?
-                </span>
-                <textarea
-                  id="profile-why"
-                  value={profile.why_join || ""}
-                  onChange={(e) => updateField("why_join", e.target.value)}
-                  placeholder="Three honest sentences are enough."
-                  rows={4}
-                  className="mt-4 w-full bg-transparent border-0 border-b border-border focus:border-foreground outline-none py-2 text-base placeholder:text-muted-foreground/50 resize-none transition-colors"
-                />
-              </label>
+              </button>
             </div>
-
-            <button
-              id="profile-save"
-              type="submit"
-              disabled={saving}
-              className="mt-8 w-full md:w-auto px-12 py-5 bg-foreground text-background text-xs tracking-[0.35em] font-medium uppercase transition-all hover:bg-fog disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? "Saving..." : "Update Profile →"}
-            </button>
-          </form>
+          </div>
         )}
 
         {/* Footer */}

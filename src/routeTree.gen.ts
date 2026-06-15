@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderExamRouteImport } from './routes/leader-exam'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VerifyIdRouteImport } from './routes/verify.$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -40,6 +41,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyIdRoute = VerifyIdRouteImport.update({
+  id: '/verify/$id',
+  path: '/verify/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/leader-exam': typeof LeaderExamRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/verify/$id': typeof VerifyIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/leader-exam': typeof LeaderExamRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/verify/$id': typeof VerifyIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,27 @@ export interface FileRoutesById {
   '/leader-exam': typeof LeaderExamRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/verify/$id': typeof VerifyIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/leader-exam' | '/login' | '/signup'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/leader-exam'
+    | '/login'
+    | '/signup'
+    | '/verify/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/leader-exam' | '/login' | '/signup'
-  id: '__root__' | '/' | '/dashboard' | '/leader-exam' | '/login' | '/signup'
+  to: '/' | '/dashboard' | '/leader-exam' | '/login' | '/signup' | '/verify/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/leader-exam'
+    | '/login'
+    | '/signup'
+    | '/verify/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +99,7 @@ export interface RootRouteChildren {
   LeaderExamRoute: typeof LeaderExamRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  VerifyIdRoute: typeof VerifyIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +139,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify/$id': {
+      id: '/verify/$id'
+      path: '/verify/$id'
+      fullPath: '/verify/$id'
+      preLoaderRoute: typeof VerifyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +155,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderExamRoute: LeaderExamRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  VerifyIdRoute: VerifyIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

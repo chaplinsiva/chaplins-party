@@ -24,6 +24,7 @@ export type Profile = {
   why_join: string | null;
   age_range: string | null;
   mobile_number: string | null;
+  member_number: number;
   role: string;
   is_active: boolean;
   created_at: string;
