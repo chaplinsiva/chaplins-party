@@ -36,6 +36,8 @@ function VerifyMemberPage() {
 
         if (fetchError || !data) {
           setError("Member not found or invalid signature. This identity is not verified.");
+        } else if (!data.full_name?.trim() || !data.member_number) {
+          setError("This membership profile is incomplete. Name and member number must be present to be verified.");
         } else {
           setProfile(data as Profile);
         }

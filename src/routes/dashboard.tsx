@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase, type Profile } from "@/lib/supabase";
 import logoImg from "@/assets/logo1cut.png";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 
 export const Route = createFileRoute("/dashboard")({
@@ -122,16 +122,14 @@ function DashboardPage() {
 
     setDownloading(true);
     try {
-      const canvas = await html2canvas(cardElement, {
-        scale: 3, // High scale for crisp rendering
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
+      const dataUrl = await toPng(cardElement, {
+        pixelRatio: 3,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+        },
       });
 
-      const imgData = canvas.toDataURL("image/png");
-      
       const pdfWidth = 85.6;
       const pdfHeight = 54;
       
@@ -141,7 +139,7 @@ function DashboardPage() {
         format: [pdfWidth, pdfHeight],
       });
 
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
       
       const memberNumStr = profile.member_number 
         ? `CPI-${String(profile.member_number).padStart(5, "0")}`
@@ -558,7 +556,52 @@ function DashboardPage() {
                     id="membership-card"
                     className="relative w-full aspect-[1.586] bg-[#080808] flex flex-col justify-between p-5 overflow-hidden text-[#fcfcfc] border border-white/10 select-none"
                     style={{
-                      backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 85%)`
+                      backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 85%)`,
+                      // Override all oklch-containing variables locally to bypass html2canvas errors
+                      ['--background' as any]: '#080808',
+                      ['--foreground' as any]: '#fcfcfc',
+                      ['--card' as any]: '#0b0c0e',
+                      ['--card-foreground' as any]: '#fcfcfc',
+                      ['--popover' as any]: '#0b0c0e',
+                      ['--popover-foreground' as any]: '#fcfcfc',
+                      ['--primary' as any]: '#fcfcfc',
+                      ['--primary-foreground' as any]: '#080808',
+                      ['--secondary' as any]: '#1a1a1b',
+                      ['--secondary-foreground' as any]: '#fcfcfc',
+                      ['--muted' as any]: '#1a1a1b',
+                      ['--muted-foreground' as any]: '#8a8a8f',
+                      ['--accent' as any]: '#2a2a2b',
+                      ['--accent-foreground' as any]: '#fcfcfc',
+                      ['--destructive' as any]: '#ef4444',
+                      ['--destructive-foreground' as any]: '#fcfcfc',
+                      ['--border' as any]: '#2e3035',
+                      ['--input' as any]: '#2e3035',
+                      ['--ring' as any]: '#ef4444',
+                      ['--ink' as any]: '#050505',
+                      ['--ash' as any]: '#6b7280',
+                      ['--fog' as any]: '#cbd5e1',
+                      ['--color-background' as any]: '#080808',
+                      ['--color-foreground' as any]: '#fcfcfc',
+                      ['--color-card' as any]: '#0b0c0e',
+                      ['--color-card-foreground' as any]: '#fcfcfc',
+                      ['--color-popover' as any]: '#0b0c0e',
+                      ['--color-popover-foreground' as any]: '#fcfcfc',
+                      ['--color-primary' as any]: '#fcfcfc',
+                      ['--color-primary-foreground' as any]: '#080808',
+                      ['--color-secondary' as any]: '#1a1a1b',
+                      ['--color-secondary-foreground' as any]: '#fcfcfc',
+                      ['--color-muted' as any]: '#1a1a1b',
+                      ['--color-muted-foreground' as any]: '#8a8a8f',
+                      ['--color-accent' as any]: '#2a2a2b',
+                      ['--color-accent-foreground' as any]: '#fcfcfc',
+                      ['--color-destructive' as any]: '#ef4444',
+                      ['--color-destructive-foreground' as any]: '#fcfcfc',
+                      ['--color-border' as any]: '#2e3035',
+                      ['--color-input' as any]: '#2e3035',
+                      ['--color-ring' as any]: '#ef4444',
+                      ['--color-ink' as any]: '#050505',
+                      ['--color-ash' as any]: '#6b7280',
+                      ['--color-fog' as any]: '#cbd5e1',
                     }}
                   >
                     {/* Grain & Scanlines overlay inside the card */}
