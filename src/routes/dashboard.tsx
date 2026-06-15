@@ -333,7 +333,7 @@ function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
             {/* Form Column */}
-            <form onSubmit={handleSave} className="lg:col-span-2">
+            <form onSubmit={handleSave} className="lg:col-span-2 order-2 lg:order-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border border border-border">
                 {/* Email — read only */}
                 <label className="block bg-background p-6 md:col-span-2">
@@ -533,7 +533,7 @@ function DashboardPage() {
             </form>
 
             {/* Sticky Card Column */}
-            <div className="lg:col-span-1 lg:sticky lg:top-28 flex flex-col items-center lg:items-stretch gap-6">
+            <div className="lg:col-span-1 lg:sticky lg:top-28 flex flex-col items-center lg:items-stretch gap-6 order-1 lg:order-2">
               <div className="w-full">
                 <div className="flex items-center gap-4 mb-4">
                   <span className="font-mono text-[10px] tracking-[0.4em] text-muted-foreground">02</span>
