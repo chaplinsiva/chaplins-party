@@ -40,6 +40,7 @@ const NAV = [
 ] as const;
 
 function Index() {
+  const { user } = useAuth();
   const [time, setTime] = useState("");
   const [memberCount, setMemberCount] = useState<number | null>(null);
 
@@ -129,6 +130,23 @@ function Index() {
                 Join the Movement
                 <span className="ml-2 sm:ml-3 transition-transform group-hover:translate-x-1">→</span>
               </a>
+              {user ? (
+                <Link
+                  to="/dashboard"
+                  className="group inline-flex items-center justify-center px-5 sm:px-8 py-3 sm:py-4 border border-border text-foreground text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.3em] font-medium uppercase transition-all hover:border-foreground hover:bg-secondary bg-secondary/10"
+                >
+                  Dashboard
+                  <span className="ml-2 sm:ml-3 transition-transform group-hover:translate-x-1">→</span>
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className="group inline-flex items-center justify-center px-5 sm:px-8 py-3 sm:py-4 border border-border text-foreground text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.3em] font-medium uppercase transition-all hover:border-foreground hover:bg-secondary bg-secondary/10"
+                >
+                  Login
+                  <span className="ml-2 sm:ml-3 transition-transform group-hover:translate-x-1">→</span>
+                </Link>
+              )}
             </div>
 
             {/* ── Live Member Counter — centered, b&w ── */}
@@ -599,12 +617,6 @@ function Nav() {
                 </span>
               </div>
               <Link
-                to="/leader-exam"
-                className="font-mono text-[11px] tracking-[0.25em] uppercase bg-foreground text-background px-4 py-1.5 hover:bg-fog hover:text-black transition-colors duration-300"
-              >
-                Become a Leader
-              </Link>
-              <Link
                 to="/dashboard"
                 className="font-mono text-[11px] tracking-[0.25em] uppercase text-foreground border border-border px-4 py-1.5 hover:bg-secondary transition-colors"
               >
@@ -651,15 +663,6 @@ function Nav() {
                     <img src={logoImg} alt="Brand Logo" className="h-3 w-3 rounded-full border border-border/30" />
                     Member
                   </span>
-                </div>
-                <div className="px-6 py-4 border-b border-border">
-                  <Link
-                    to="/leader-exam"
-                    onClick={() => setOpen(false)}
-                    className="block w-full py-3 bg-foreground text-background font-mono text-xs tracking-[0.3em] uppercase text-center hover:bg-fog transition-colors"
-                  >
-                    Become a Leader
-                  </Link>
                 </div>
                 <Link
                   to="/dashboard"
@@ -901,13 +904,40 @@ function Footer() {
         </div>
         <div className="md:col-span-3">
           <div className="font-mono text-[10px] tracking-[0.35em] text-muted-foreground uppercase">
-            Correspondence
+            Connect
           </div>
-          <p className="mt-6 text-sm text-foreground/80 leading-relaxed">
-            <a href="mailto:partychaplin@gmail.com" className="hover:text-foreground hover:underline transition-colors">
-              partychaplin@gmail.com
-            </a>
-          </p>
+          <ul className="mt-6 space-y-3 font-mono text-[11px] tracking-[0.15em] uppercase">
+            <li>
+              <a
+                href="https://www.youtube.com/@ChaplinParty"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground/80 hover:text-foreground hover:underline transition-colors block"
+              >
+                YouTube
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://www.instagram.com/chaplin_party/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground/80 hover:text-foreground hover:underline transition-colors block"
+              >
+                Instagram
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://x.com/ChaplinParty"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground/80 hover:text-foreground hover:underline transition-colors block"
+              >
+                X / Twitter
+              </a>
+            </li>
+          </ul>
           <p className="mt-6 font-mono text-[10px] tracking-[0.3em] text-muted-foreground">
             EST. MMXXVI · NO. 001
           </p>

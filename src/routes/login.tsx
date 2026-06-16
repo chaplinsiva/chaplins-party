@@ -103,9 +103,17 @@ function LoginPage() {
             </label>
 
             <label className="block bg-background p-6">
-              <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
-                Password
-              </span>
+              <div className="flex justify-between items-center">
+                <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-muted-foreground">
+                  Password
+                </span>
+                <Link
+                  to="/forgot-password"
+                  className="font-mono text-[10px] tracking-wider text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 id="login-password"
                 type="password"

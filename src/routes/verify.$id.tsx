@@ -28,16 +28,16 @@ function VerifyMemberPage() {
       setLoading(true);
       setError(null);
       try {
-        let query = supabase.from("member_verification").select("*");
-        
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        let rpcPromise;
+
         if (uuidRegex.test(id)) {
-          query = query.eq("id", id);
+          rpcPromise = supabase.rpc("get_member_verification", { member_id: id });
         } else {
           const cpiCodeMatch = id.match(/^(?:CPI-)?0*(\d+)$/i);
           if (cpiCodeMatch) {
             const codeNum = parseInt(cpiCodeMatch[1], 10);
-            query = query.eq("cpi_code", codeNum);
+            rpcPromise = supabase.rpc("get_member_verification", { code_num: codeNum });
           } else {
             setError("Invalid verification code format.");
             setLoading(false);
@@ -45,14 +45,17 @@ function VerifyMemberPage() {
           }
         }
 
-        const { data, error: fetchError } = await query.single();
+        const { data, error: fetchError } = await rpcPromise;
 
-        if (fetchError || !data) {
+        if (fetchError || !data || data.length === 0) {
           setError("Member not found or invalid signature. This identity is not verified.");
-        } else if (!data.full_name?.trim() || !data.cpi_code) {
-          setError("This membership profile is incomplete. Name and CPI code must be present to be verified.");
         } else {
-          setProfile(data as Profile);
+          const record = data[0];
+          if (!record.full_name?.trim() || !record.cpi_code) {
+            setError("This membership profile is incomplete. Name and CPI code must be present to be verified.");
+          } else {
+            setProfile(record as Profile);
+          }
         }
       } catch (err) {
         console.error("Verification error:", err);
